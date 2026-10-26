@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b1020">
+  <title>YouTube Link Library</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0b1020;
+      color: #f5f7ff;
+      font-synthesis: none;
+      text-rendering: optimizeLegibility;
+      --muted: #aab3c8;
+      --line: rgba(255,255,255,.1);
+      --panel: rgba(22,29,50,.88);
+      --accent: #ff4255;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      min-width: 320px;
+      min-height: 100vh;
+      margin: 0;
+      background:
+        radial-gradient(ellipse at 10% 0%, rgba(78,92,190,.24), transparent 35rem),
+        radial-gradient(ellipse at 100% 30%, rgba(255,66,85,.12), transparent 30rem),
+        #0b1020;
+    }
+
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+    .shell { width: min(980px, calc(100% - 32px)); margin: 0 auto; padding: 48px 0 64px; }
+    .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 54px; }
+    .brand-mark {
+      display: grid; width: 42px; height: 30px; place-items: center;
+      border-radius: 9px; background: var(--accent); color: white;
+    }
+    .brand-mark svg { width: 17px; height: 17px; }
+    .brand-name { font-size: 15px; font-weight: 750; letter-spacing: -.02em; }
+    .hero { max-width: 680px; margin-bottom: 32px; }
+    .eyebrow {
+      color: #ff9ba5; font-size: 12px; font-weight: 750; letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+    h1 { margin: 12px 0; font-size: clamp(34px, 7vw, 56px); line-height: 1.04; letter-spacing: -.055em; }
+    .hero p { max-width: 580px; color: var(--muted); font-size: 16px; line-height: 1.65; }
+    .panel {
+      padding: 22px; border: 1px solid var(--line); border-radius: 18px;
+      background: var(--panel); box-shadow: 0 20px 60px rgba(0,0,0,.22);
+      backdrop-filter: blur(16px);
+    }
+    .form-label { display: block; margin-bottom: 10px; font-size: 13px; font-weight: 700; }
+    .url-row { display: flex; gap: 10px; }
+    .url-input {
+      flex: 1; min-width: 0; padding: 14px 15px; border: 1px solid var(--line);
+      border-radius: 11px; outline: none; background: #10172a; color: #fff;
+    }
+    .url-input:focus { border-color: #8493ff; box-shadow: 0 0 0 3px rgba(132,147,255,.15); }
+    .primary, .secondary {
+      min-height: 48px; padding: 0 17px; border: 0; border-radius: 11px;
+      font-weight: 750; transition: transform .15s ease, opacity .15s ease;
+    }
+    .primary { background: var(--accent); color: #fff; }
+    .secondary { border: 1px solid var(--line); background: #171f34; color: #f5f7ff; }
+    .primary:hover, .secondary:hover { transform: translateY(-1px); }
+    .hint, .status { color: var(--muted); font-size: 12px; line-height: 1.5; }
+    .hint { margin: 10px 0 0; }
+    .status { min-height: 18px; margin: 10px 0 0; }
+    .status.error { color: #ff9ba5; }
+    .status.success { color: #86e4b5; }
+    .preview { display: none; margin-top: 24px; overflow: hidden; }
+    .preview.visible { display: block; }
+    .video-frame {
+      position: relative; width: 100%; aspect-ratio: 16 / 9; overflow: hidden;
+      border: 1px solid var(--line); border-radius: 14px; background: #05070d;
+    }
+    .video-frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+    .video-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 14px; }
+    .video-actions p { margin: 0; overflow-wrap: anywhere; color: var(--muted); font-size: 12px; }
+    .action-group { display: flex; flex-wrap: wrap; gap: 8px; }
+    .action-group button { min-height: 40px; padding: 0 13px; font-size: 12px; }
+    .library { margin-top: 38px; }
+    .library-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 14px; }
+    h2 { margin: 0; font-size: 19px; letter-spacing: -.03em; }
+    .count { color: var(--muted); font-size: 12px; }
+    .empty {
+      padding: 24px; border: 1px dashed var(--line); border-radius: 14px;
+      color: var(--muted); text-align: center; font-size: 13px;
+    }
+    .saved-list { display: grid; gap: 10px; }
+    .saved-item {
+      display: flex; align-items: center; justify-content: space-between; gap: 14px;
+      padding: 14px; border: 1px solid var(--line); border-radius: 13px; background: rgba(22,29,50,.65);
+    }
+    .saved-info { min-width: 0; }
+    .saved-info strong { display: block; margin-bottom: 5px; font-size: 13px; }
+    .saved-info a { display: block; overflow: hidden; color: var(--muted); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+    .saved-actions { display: flex; flex-shrink: 0; gap: 7px; }
+    .saved-actions button { padding: 8px 10px; font-size: 11px; }
+    .notice {
+      margin-top: 30px; padding: 14px 16px; border-left: 3px solid #8493ff;
+      border-radius: 4px 10px 10px 4px; background: rgba(132,147,255,.08);
+      color: var(--muted); font-size: 12px; line-height: 1.6;
+    }
+
+    @media (max-width: 620px) {
+      .shell { padding-top: 28px; }
+      .brand { margin-bottom: 40px; }
+      .url-row, .video-actions { align-items: stretch; flex-direction: column; }
+      .primary { width: 100%; }
+      .video-actions { align-items: flex-start; }
+      .saved-item { align-items: flex-start; flex-direction: column; }
+      .saved-actions { width: 100%; }
+      .saved-actions button { flex: 1; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="brand" aria-label="YouTube Link Library">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.8v12.4L18 12 8 5.8Z"/></svg>
+      </span>
+      <span class="brand-name">YouTube Link Library</span>
+    </header>
+
+    <section class="hero">
+      <div class="eyebrow">Watch and organize</div>
+      <h1>Your videos,<br>all in one place.</h1>
+      <p>Paste a YouTube link to preview it here, then save it to your personal link library on this device.</p>
+    </section>
+
+    <section class="panel" aria-label="Video preview">
+      <form id="video-form">
+        <label class="form-label" for="video-url">YouTube video link</label>
+        <div class="url-row">
+          <input class="url-input" id="video-url" name="video-url" type="url" inputmode="url"
+                 placeholder="https://www.youtube.com/watch?v=..." autocomplete="url" required>
+          <button class="primary" type="submit">Preview video</button>
+        </div>
+        <p class="hint">Supports youtube.com, youtu.be, and YouTube Shorts links.</p>
+        <p class="status" id="status" role="status" aria-live="polite"></p>
+      </form>
+      <div class="preview" id="preview">
+        <div class="video-frame">
+          <iframe id="player" title="YouTube video preview"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+        </div>
+        <div class="video-actions">
+          <p id="video-description">YouTube video preview</p>
+          <div class="action-group">
+            <button class="secondary" id="open-youtube" type="button">Open on YouTube</button>
+            <button class="secondary" id="save-video" type="button">Save link</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="library" aria-labelledby="library-title">
+      <div class="library-heading">
+        <h2 id="library-title">Saved links</h2>
+        <span class="count" id="saved-count">0 videos</span>
+      </div>
+      <div class="saved-list" id="saved-list"></div>
+    </section>
+
+    <aside class="notice">
+      This page previews and organizes links; it does not download videos. To watch offline, use YouTube’s
+      official offline features where available, or download only content you own or are explicitly authorized to download.
+    </aside>
+  </main>
+
+  <script>
+    (() => {
+      const STORAGE_KEY = 'youtube-link-library-v1';
+      const form = document.querySelector('#video-form');
+      const input = document.querySelector('#video-url');
+      const status = document.querySelector('#status');
+      const preview = document.querySelector('#preview');
+      const player = document.querySelector('#player');
+      const description = document.querySelector('#video-description');
+      const savedList = document.querySelector('#saved-list');
+      const savedCount = document.querySelector('#saved-count');
+      let currentVideo = null;
+      let savedVideos = loadSavedVideos();
+
+      function loadSavedVideos() {
+        try {
+          const value = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+          return Array.isArray(value)
+            ? value.filter(item => item && typeof item.id === 'string' && /^[\w-]{11}$/.test(item.id))
+            : [];
+        } catch (error) {
+          setStatus('Could not read saved links from this browser.', 'error');
+          return [];
+        }
+      }
+
+      function setStatus(message, type) {
+        status.textContent = message;
+        status.className = `status${type ? ` ${type}` : ''}`;
+      }
+
+      function parseVideoId(rawUrl) {
+        let url;
+        try {
+          url = new URL(rawUrl);
+        } catch {
+          return null;
+        }
+        if (url.protocol !== 'https:' && url.protocol !== 'http:') return null;
+        const host = url.hostname.toLowerCase().replace(/^www\./, '');
+        let id = null;
+        if (host === 'youtu.be') {
+          id = url.pathname.split('/').filter(Boolean)[0];
+        } else if (host === 'youtube.com' || host === 'm.youtube.com' || host === 'music.youtube.com') {
+          const parts = url.pathname.split('/').filter(Boolean);
+          if (url.pathname === '/watch') id = url.searchParams.get('v');
+          else if (['embed', 'shorts', 'live', 'v'].includes(parts[0])) id = parts[1];
+        }
+        return id && /^[\w-]{11}$/.test(id) ? id : null;
+      }
+
+      function canonicalUrl(id) {
+        return `https://www.youtube.com/watch?v=${encodeURIComponent(id)}`;
+      }
+
+      function showPreview(id) {
+        currentVideo = { id, url: canonicalUrl(id) };
+        player.src = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(id)}`;
+        description.textContent = `Video ID: ${id}`;
+        preview.classList.add('visible');
+        document.querySelector('#open-youtube').onclick = () => {
+          window.open(currentVideo.url, '_blank', 'noopener,noreferrer');
+        };
+        setStatus('Video preview is ready.', 'success');
+      }
+
+      function saveVideos() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(savedVideos));
+          return true;
+        } catch {
+          setStatus('Could not save links. Check your browser storage settings.', 'error');
+          return false;
+        }
+      }
+
+      function renderSavedVideos() {
+        savedCount.textContent = `${savedVideos.length} ${savedVideos.length === 1 ? 'video' : 'videos'}`;
+        savedList.replaceChildren();
+        if (savedVideos.length === 0) {
+          const empty = document.createElement('div');
+          empty.className = 'empty';
+          empty.textContent = 'No saved links yet. Preview a video and choose “Save link”.';
+          savedList.append(empty);
+          return;
+        }
+        for (const video of savedVideos) {
+          const row = document.createElement('article');
+          row.className = 'saved-item';
+          const info = document.createElement('div');
+          info.className = 'saved-info';
+          const title = document.createElement('strong');
+          title.textContent = `YouTube video · ${video.id}`;
+          const link = document.createElement('a');
+          link.href = canonicalUrl(video.id);
+          link.target = '_blank';
+          link.rel = 'noopener noreferrer';
+          link.textContent = canonicalUrl(video.id);
+          info.append(title, link);
+          const actions = document.createElement('div');
+          actions.className = 'saved-actions';
+          const previewButton = document.createElement('button');
+          previewButton.className = 'secondary';
+          previewButton.type = 'button';
+          previewButton.textContent = 'Preview';
+          previewButton.addEventListener('click', () => {
+            input.value = canonicalUrl(video.id);
+            showPreview(video.id);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          });
+          const removeButton = document.createElement('button');
+          removeButton.className = 'secondary';
+          removeButton.type = 'button';
+          removeButton.textContent = 'Remove';
+          removeButton.setAttribute('aria-label', `Remove saved video ${video.id}`);
+          removeButton.addEventListener('click', () => {
+            savedVideos = savedVideos.filter(item => item.id !== video.id);
+            if (saveVideos()) {
+              renderSavedVideos();
+              setStatus('Saved link removed.', 'success');
+            }
+          });
+          actions.append(previewButton, removeButton);
+          row.append(info, actions);
+          savedList.append(row);
+        }
+      }
+
+      form.addEventListener('submit', event => {
+        event.preventDefault();
+        const id = parseVideoId(input.value.trim());
+        if (!id) {
+          preview.classList.remove('visible');
+          player.removeAttribute('src');
+          currentVideo = null;
+          setStatus('Enter a valid YouTube video link (watch, youtu.be, Shorts, or live).', 'error');
+          return;
+        }
+        showPreview(id);
+      });
+
+      document.querySelector('#save-video').addEventListener('click', () => {
+        if (!currentVideo) return;
+        if (savedVideos.some(video => video.id === currentVideo.id)) {
+          setStatus('This video is already in your saved links.', 'success');
+          return;
+        }
+        savedVideos.unshift({ id: currentVideo.id });
+        if (saveVideos()) {
+          renderSavedVideos();
+          setStatus('Video link saved on this device.', 'success');
+        }
+      });
+
+      renderSavedVideos();
+    })();
+  </script>
+</body>
+</html>
